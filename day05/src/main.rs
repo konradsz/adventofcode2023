@@ -19,19 +19,21 @@ impl Map {
 }
 
 fn part_1(almanac: &[Vec<Map>], seeds: Vec<u64>) -> u64 {
-    let mut global_min = u64::MAX;
-    for mut seed in seeds {
-        for maps in almanac.iter() {
-            for map in maps {
-                if map.affects(seed) {
-                    seed = map.map(seed);
-                    break;
+    seeds
+        .into_iter()
+        .map(|mut seed| {
+            for maps in almanac.iter() {
+                for map in maps {
+                    if map.affects(seed) {
+                        seed = map.map(seed);
+                        break;
+                    }
                 }
             }
-        }
-        global_min = global_min.min(seed);
-    }
-    global_min
+            seed
+        })
+        .min()
+        .unwrap()
 }
 
 fn part_2(almanac: &[Vec<Map>], seeds: Vec<u64>) -> u64 {
