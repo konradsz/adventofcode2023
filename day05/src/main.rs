@@ -38,23 +38,24 @@ fn part_2(almanac: &[Vec<Map>], seeds: Vec<u64>) -> u64 {
     seeds
         .par_chunks(2)
         .map(|seed_range| {
-            let mut chunk_min = u64::MAX;
             let start = seed_range[0];
             let length = seed_range[1];
 
-            for mut seed in start..start + length {
-                for maps in almanac.iter() {
-                    for map in maps {
-                        if map.affects(seed) {
-                            seed = map.map(seed);
-                            break;
+            (start..start + length)
+                .into_par_iter()
+                .map(|mut seed| {
+                    for maps in almanac.iter() {
+                        for map in maps {
+                            if map.affects(seed) {
+                                seed = map.map(seed);
+                                break;
+                            }
                         }
                     }
-                }
-                chunk_min = chunk_min.min(seed);
-            }
-
-            chunk_min
+                    seed
+                })
+                .min()
+                .unwrap()
         })
         .min()
         .unwrap()
