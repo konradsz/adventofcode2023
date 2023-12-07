@@ -94,20 +94,10 @@ impl Hand {
         }
         match chars.len() {
             1 => Type::FiveOfAKind,
-            2 => {
-                if chars.values().any(|v| *v == 4) {
-                    Type::FourOfAKind
-                } else {
-                    Type::FullHouse
-                }
-            }
-            3 => {
-                if chars.values().any(|v| *v == 3) {
-                    Type::ThreeOfAKind
-                } else {
-                    Type::TwoPair
-                }
-            }
+            2 if chars.values().any(|v| *v == 4) => Type::FourOfAKind,
+            2 => Type::FullHouse,
+            3 if chars.values().any(|v| *v == 3) => Type::ThreeOfAKind,
+            3 => Type::TwoPair,
             4 => Type::OnePair,
             5 => Type::HighCard,
             _ => panic!("whoops"),
@@ -138,13 +128,8 @@ impl Hand {
             1 => match chars.len() {
                 4 => Type::OnePair,
                 3 => Type::ThreeOfAKind,
-                2 => {
-                    if chars.values().any(|v| *v == 3) {
-                        Type::FourOfAKind
-                    } else {
-                        Type::FullHouse
-                    }
-                }
+                2 if chars.values().any(|v| *v == 3) => Type::FourOfAKind,
+                2 => Type::FullHouse,
                 _ => Type::FiveOfAKind,
             },
             _ => self.get_type(),
@@ -167,10 +152,11 @@ fn main() {
 
     let len = hands.len();
 
-    let mut sum = 0;
-    for (idx, HandAndBid(_, bid)) in hands.into_iter().enumerate() {
-        sum += (len - idx) as u64 * bid;
-    }
+    let sum: u64 = hands
+        .into_iter()
+        .enumerate()
+        .map(|(idx, HandAndBid(_, bid))| (len - idx) as u64 * bid)
+        .sum();
 
-    println!("{sum}");
+    assert_eq!(sum, 250057090);
 }
