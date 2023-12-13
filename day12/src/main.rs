@@ -1,5 +1,3 @@
-use std::collections::VecDeque;
-
 fn is_valid2(record: &[u8], groups: &[u32]) -> bool {
     let mut damaged_groups = vec![];
     let mut current_len = 0;
@@ -24,7 +22,7 @@ fn is_valid2(record: &[u8], groups: &[u32]) -> bool {
     damaged_groups == groups
 }
 
-fn is_valid(record: &[u8], idx: usize, groups: &[u32]) -> bool {
+fn is_partially_valid(record: &[u8], groups: &[u32]) -> bool {
     let mut damaged_groups = vec![];
     let mut current_len = 0;
     for condition in record {
@@ -45,125 +43,55 @@ fn is_valid(record: &[u8], idx: usize, groups: &[u32]) -> bool {
         damaged_groups.push(current_len);
     }
 
-    // println!(
-    //     "{} -> {:?}",
-    //     String::from_utf8(record.to_vec()).unwrap(),
-    //     damaged_groups
-    // );
-
-    // let found_groups = damaged_groups.len();
-    // if let Some(to_check) = found_groups.checked_sub(1) {
-    //     for i in 0..to_check {
-    //         if damaged_groups[i] != groups[i] {
-    //             return false;
-    //         }
-    //     }
-    // }
-
-    // if found_groups > 0 {
-    //     if damaged_groups[found_groups - 1] > groups[found_groups - 1] {
-    //         return false;
-    //     }
-    // }
-
-    // true
-    let mut result = true;
     if damaged_groups.len() > groups.len() {
-        result = false;
+        return false;
     } else {
         if damaged_groups.iter().zip(groups.iter()).any(|(a, b)| a > b) {
-            result = false;
+            return false;
         }
     }
 
-    // if result {
-    //     println!(
-    //         "{} -> {:?} is valid",
-    //         String::from_utf8(record.to_vec()).unwrap(),
-    //         damaged_groups
-    //     );
-    // } else {
-    //     println!(
-    //         "{} -> {:?} is invalid",
-    //         String::from_utf8(record.to_vec()).unwrap(),
-    //         damaged_groups
-    //     );
-    // }
+    true
+}
 
-    result
+fn count_arrangements(input: &[u8], groups: &[u32]) -> u32 {
+    if !is_partially_valid(input, groups) {
+        return 0;
+    }
+
+    if !input.contains(&b'?') {
+        if is_valid2(input, groups) {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+
+    let unknown = input.iter().position(|c| *c == b'?').unwrap();
+
+    let mut input1 = input.to_vec();
+    input1[unknown] = b'.';
+    let mut input2 = input.to_vec();
+    input2[unknown] = b'#';
+    return count_arrangements(&input1, groups) + count_arrangements(&input2, groups);
+}
+
+fn part_1(input: &str) -> u32 {
+    input
+        .lines()
+        .map(|line| {
+            let (record, groups) = line.split_once(' ').unwrap();
+            let groups = groups
+                .split(',')
+                .map(|n| n.parse::<u32>().unwrap())
+                .collect::<Vec<_>>();
+            count_arrangements(record.as_bytes(), &groups)
+        })
+        .sum()
 }
 
 fn main() {
-    // let input = "?###????????";
-    // let unknowns = input
-    //     .bytes()
-    //     .enumerate()
-    //     .filter_map(|(idx, b)| if b == b'?' { Some(idx) } else { None })
-    //     .collect::<Vec<_>>();
-
-    // println!("{unknowns:?}");
-
-    // let mut queue = VecDeque::new();
-    // queue.push_back(("?###????????".as_bytes().to_vec(), unknowns));
-
-    // while let Some((record, indexes)) = queue.pop_front() {
-    //     // println!("{}", String::from_utf8(record.clone()).unwrap());
-    //     if indexes.len() > 0 {
-    //         if is_valid(&record, indexes[0], &[3, 2, 1]) {
-    //             // println!("valid");
-    //             let mut record1 = record.clone();
-    //             record1[indexes[0]] = b'.';
-    //             queue.push_back((record1.to_vec(), indexes[1..].to_vec()));
-
-    //             let mut record2 = record;
-    //             record2[indexes[0]] = b'#';
-    //             queue.push_back((record2, indexes[1..].to_vec()));
-    //         }
-    //     } else {
-    //         if is_valid2(&record, &[3, 2, 1]) {
-    //             println!("{} is VALID", String::from_utf8(record.clone()).unwrap());
-    //         }
-    //     }
-    // }
     let input = std::fs::read_to_string("input").unwrap();
-    let mut sum = 0;
-    for line in input.lines() {
-        let (record, groups) = line.split_once(' ').unwrap();
-        let groups = groups
-            .split(',')
-            .map(|n| n.parse::<u32>().unwrap())
-            .collect::<Vec<_>>();
 
-        let unknowns = record
-            .bytes()
-            .enumerate()
-            .filter_map(|(idx, b)| if b == b'?' { Some(idx) } else { None })
-            .collect::<Vec<_>>();
-
-        let mut queue = VecDeque::new();
-        queue.push_back((record.as_bytes().to_vec(), unknowns));
-
-        while let Some((record, indexes)) = queue.pop_front() {
-            // println!("{}", String::from_utf8(record.clone()).unwrap());
-            if indexes.len() > 0 {
-                if is_valid(&record, indexes[0], &groups) {
-                    // println!("valid");
-                    let mut record1 = record.clone();
-                    record1[indexes[0]] = b'.';
-                    queue.push_back((record1.to_vec(), indexes[1..].to_vec()));
-
-                    let mut record2 = record;
-                    record2[indexes[0]] = b'#';
-                    queue.push_back((record2, indexes[1..].to_vec()));
-                }
-            } else {
-                if is_valid2(&record, &groups) {
-                    // println!("{} is VALID", String::from_utf8(record.clone()).unwrap());
-                    sum += 1;
-                }
-            }
-        }
-    }
-
-    println!("{sum}");
+    assert_eq!(part_1(&input), 7110);
 }
