@@ -112,47 +112,54 @@ fn main() {
     let width = map[0].len();
     let height = map.len();
 
-    let mut beams = vec![Beam {
-        x: 0,
-        y: 0,
-        dir: Direction::Right,
-    }];
+    let mut max = 0;
+    for x in 0..width {
+        let mut beams = vec![Beam {
+            x: x as i32,
+            y: 0,
+            dir: Direction::Down,
+        }];
 
-    let mut energized_tiles = HashSet::new();
+        let mut energized_tiles = HashSet::new();
 
-    let mut steps = 0;
+        let mut steps = 0;
 
-    while steps < 600 {
-        steps += 1;
-        for beam in beams.iter() {
-            energized_tiles.insert((beam.x, beam.y));
-        }
-
-        let mut new_beams = vec![];
-        for beam in beams.iter_mut() {
-            match map[beam.y as usize][beam.x as usize] {
-                Tile::VerticalSplitter => new_beams.append(&mut beam.split_vertically()),
-                Tile::HorizontalSplitter => new_beams.append(&mut beam.split_horizontally()),
-                Tile::LeftMirror => {
-                    beam.turn_on_left();
-                    new_beams.push(*beam);
-                }
-                Tile::RightMirror => {
-                    beam.turn_on_right();
-                    new_beams.push(*beam);
-                }
-                _ => new_beams.push(*beam),
+        while steps < 500 {
+            steps += 1;
+            for beam in beams.iter() {
+                energized_tiles.insert((beam.x, beam.y));
             }
+
+            let mut new_beams = vec![];
+            for beam in beams.iter_mut() {
+                match map[beam.y as usize][beam.x as usize] {
+                    Tile::VerticalSplitter => new_beams.append(&mut beam.split_vertically()),
+                    Tile::HorizontalSplitter => new_beams.append(&mut beam.split_horizontally()),
+                    Tile::LeftMirror => {
+                        beam.turn_on_left();
+                        new_beams.push(*beam);
+                    }
+                    Tile::RightMirror => {
+                        beam.turn_on_right();
+                        new_beams.push(*beam);
+                    }
+                    _ => new_beams.push(*beam),
+                }
+            }
+
+            beams = new_beams;
+
+            for beam in beams.iter_mut() {
+                beam.mov();
+            }
+
+            beams.retain(|beam| !beam.is_outside(width, height));
         }
 
-        beams = new_beams;
-
-        for beam in beams.iter_mut() {
-            beam.mov();
+        if max < energized_tiles.len() {
+            max = energized_tiles.len();
         }
-
-        beams.retain(|beam| !beam.is_outside(width, height));
     }
 
-    println!("{}", energized_tiles.len());
+    assert_eq!(max, 7154);
 }
